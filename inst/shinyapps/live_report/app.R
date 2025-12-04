@@ -166,7 +166,7 @@ ui <- fluidPage(
       h3("График 1: Разница времени прохождения отдельных отрезков гонки"),
       
       plotOutput("my_plot"),
-      actionButton("save_plot", "Сохранить график 1"),
+      actionButton("save_plot1", "Сохранить график 1"),
       
       h3("График 2: Текущий проигрыш на промежуточных отсечках"),
       
@@ -300,7 +300,9 @@ server <- function(input, output) {
       geom_point()+
       geom_line()+
       theme_bw() +
-      guides(color = guide_legend(title = NULL))
+      guides(color = guide_legend(title = NULL)) +
+      ylab("Разница в секундах") +
+      xlab("")
     
   })
   
@@ -314,7 +316,9 @@ server <- function(input, output) {
       geom_point()+
       geom_line()+
       theme_bw() +
-      guides(color = guide_legend(title = NULL))
+      guides(color = guide_legend(title = NULL)) +
+      ylab("Разница в секундах") +
+      xlab("")
 
   })
   
@@ -342,7 +346,15 @@ server <- function(input, output) {
   
   observeEvent(input$save_plot, {
     # Задаем путь для сохранения
-    ggsave("my_plot.png", plot = last_plot(), width = 8, height = 6)
+    save_plot1 <- selected_data() %>%
+      ggplot(aes(x = split, y = diff_time, group = ath_place, col = ath_place)) +
+      geom_point()+
+      geom_line()+
+      theme_bw() +
+      guides(color = guide_legend(title = NULL)) +
+      ylab("Разница в секундах") +
+      xlab("")
+    ggsave("my_plot_1.png", plot = save_plot1, width = 8, height = 6)
     showNotification("График сохранен как my_plot_1.png")
     
     
@@ -377,4 +389,5 @@ server <- function(input, output) {
 
 
 # Выполняем приложение 
+
 shinyApp(ui = ui, server = server)
