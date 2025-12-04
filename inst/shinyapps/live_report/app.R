@@ -307,10 +307,6 @@ server <- function(input, output) {
   })
   
   plot_2 <- reactive({
-    # selected_data()  %>%
-    #   ggplot(aes(x = split, y = diff_time, col = athlete, group = as.character(athlete))) + geom_point() + geom_line() +
-    #   theme_bw()
-
     selected_data() %>%
       ggplot(aes(x = split, y = cur_diff_res, group = ath_place, col = ath_place))+
       geom_point()+
@@ -344,7 +340,7 @@ server <- function(input, output) {
     plot_1()
   })
   
-  observeEvent(input$save_plot, {
+  observeEvent(input$save_plot1, {
     # Задаем путь для сохранения
     save_plot1 <- selected_data() %>%
       ggplot(aes(x = split, y = diff_time, group = ath_place, col = ath_place)) +
@@ -391,3 +387,4 @@ server <- function(input, output) {
 # Выполняем приложение 
 
 shinyApp(ui = ui, server = server)
+
