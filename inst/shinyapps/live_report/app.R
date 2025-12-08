@@ -305,7 +305,8 @@ server <- function(input, output) {
         title = input$comp,
         x = "",
         y = "Разница в секундах"
-      )
+      ) +
+      theme(legend.position = "bottom")
     
   })
   
@@ -316,8 +317,12 @@ server <- function(input, output) {
       geom_line()+
       theme_bw() +
       guides(color = guide_legend(title = NULL)) +
-      ylab("Разница в секундах") +
-      xlab("")
+      labs(
+        title = input$comp,
+        x = "",
+        y = "Разница в секундах"
+      ) +
+      theme(legend.position = "bottom")
 
   })
   
@@ -355,9 +360,11 @@ server <- function(input, output) {
         title = input$comp,
         x = "",
         y = "Разница в секундах"
-      )
+      ) +
+      theme(legend.position = "bottom")
+    
     ggsave(paste(input$comp, "отрезки.png", collapse = "_"), plot = save_plot1, width = 8, height = 6)
-    # ggsave("my_plot_1.png", plot = save_plot1, width = 8, height = 6)
+    # ggsave("my_plot_1.png", plot = save_plot1, width = 10, height = 6)
     showNotification("График сохранен")
     
     
@@ -382,9 +389,11 @@ server <- function(input, output) {
         title = input$comp,
         x = "",
         y = "Разница в секундах"
-      )
+      ) +
+      theme(legend.position = "bottom")
+    
     ggsave(paste(input$comp, "текущая разница.png", collapse = "_"), plot = save_plot2, width = 8, height = 6)
-    # ggsave("my_plot_2.png", plot = save_plot2, width = 8, height = 6)
+    # ggsave("my_plot_2.png", plot = save_plot2, width = 10, height = 6)
     showNotification("Второй график сохранен")
   })
 
@@ -400,5 +409,6 @@ server <- function(input, output) {
 # Выполняем приложение 
 
 shinyApp(ui = ui, server = server)
+
 
 
