@@ -357,7 +357,7 @@ server <- function(input, output) {
       theme_bw() +
       guides(color = guide_legend(title = NULL)) +
       labs(
-        title = input$comp,
+        title = paste(input$comp, "разница по отрезкам"),
         x = "",
         y = "Разница в секундах"
       ) +
@@ -386,7 +386,7 @@ server <- function(input, output) {
       theme_bw() +
       guides(color = guide_legend(title = NULL))+
       labs(
-        title = input$comp,
+        title = paste(input$comp, "текущая разница"),
         x = "",
         y = "Разница в секундах"
       ) +
@@ -409,6 +409,7 @@ server <- function(input, output) {
 # Выполняем приложение 
 
 shinyApp(ui = ui, server = server)
+
 
 
 
