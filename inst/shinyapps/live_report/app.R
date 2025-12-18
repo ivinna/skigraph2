@@ -10,22 +10,22 @@ Sys.setlocale("LC_TIME", "RUSSIAN")
 
 load("results_df.RData")
 
-results_df <- results_df %>% 
+results_df <- results_df %>%
   select(-len, -n, -lens) %>%
-  mutate(Title = paste(Дата, Город,`Сп. Дисциплина`, Событие, Пол)) %>% 
+  mutate(Title = paste(Дата, Город,`Сп. Дисциплина`, Событие, Пол)) %>%
   mutate(split = str_replace_all(split, "Претайминг", ""))
-  
+
 
 text_filter <- function(x, y) {
   pattern <- paste(y, collapse = "|")
   str_detect(x, regex(pattern, ignore_case = TRUE))
 }
 
-laps <- results_df %>% 
-  group_by(comp_id) %>% 
-  slice(1) %>% 
-  ungroup %>% 
-  select(Город, Дата,`Сп. Дисциплина`, comp_id, Событие, Пол) %>% 
+laps <- results_df %>%
+  group_by(comp_id) %>%
+  slice(1) %>%
+  ungroup %>%
+  select(Город, Дата,`Сп. Дисциплина`, comp_id, Событие, Пол) %>%
   mutate(Title = paste(Дата, Город,`Сп. Дисциплина`, Событие, Пол))
 
 diff_w_next <- function(x){c(x[1],(x[2:length(x)]-x[1:(length(x)-1)]))}
@@ -35,10 +35,10 @@ diff_w_next <- function(x){c(x[1],(x[2:length(x)]-x[1:(length(x)-1)]))}
 library(shiny)
 
 ui <- fluidPage(
-  
+
   # Название приложения
   titlePanel("Анализ прохождения отрезков дистанции"),
-  
+
   # ввод данных
   fluidRow(
     column(
@@ -51,7 +51,7 @@ ui <- fluidPage(
         options = list(placeholder = 'Начните вводить для поиска')
       )
     ),
-  
+
     column(
       width = 4,
       selectizeInput(
@@ -62,7 +62,7 @@ ui <- fluidPage(
       options = list(placeholder = 'Начните вводить для поиска')
     )
     ),
-  
+
   column(
     width = 4,
     selectizeInput(
@@ -73,7 +73,7 @@ ui <- fluidPage(
       options = list(placeholder = 'Начните вводить для поиска')
     )
   ),
-  
+
   column(
     width = 4,
     selectizeInput(
@@ -84,7 +84,7 @@ ui <- fluidPage(
       options = list(placeholder = 'Начните вводить для поиска')
     )
   ),
-  
+
   column(
     width = 4,
     selectizeInput(
@@ -95,7 +95,7 @@ ui <- fluidPage(
       options = list(placeholder = 'Начните вводить для поиска')
     )
   ),
-  
+
   column(
     width = 4,
     selectizeInput(
@@ -106,7 +106,7 @@ ui <- fluidPage(
       options = list(placeholder = 'Начните вводить для поиска')
     )
   ),
-  
+
   column(
     width = 4,
     selectizeInput(
@@ -117,7 +117,7 @@ ui <- fluidPage(
       options = list(placeholder = 'Начните вводить для поиска')
     )
   ),
-  
+
   column(
     width = 4,
     selectizeInput(
@@ -128,7 +128,7 @@ ui <- fluidPage(
       options = list(placeholder = 'Начните вводить для поиска')
     )
   ),
-  
+
   column(
     width = 4,
     selectizeInput(
@@ -139,7 +139,7 @@ ui <- fluidPage(
       options = list(placeholder = 'Начните вводить для поиска')
     )
   ),
-  
+
   column(
     width = 4,
     selectizeInput(
@@ -150,53 +150,53 @@ ui <- fluidPage(
       options = list(placeholder = 'Начните вводить для поиска')
     )
   ),
-    
-    # Показать график 
+
+    # Показать график
     mainPanel(
-      
+
       h3("График 1: Разница времени прохождения отдельных отрезков гонки"),
-      
+
       plotOutput("my_plot"),
       actionButton("save_plot1", "Сохранить график 1"),
-      
+
       h3("График 2: Текущий проигрыш на промежуточных отсечках"),
-      
+
       plotOutput("my_plot2"),
       actionButton("save_plot2", "Сохранить график 2"),
-      
+
       # tableOutput("splits"),
-      
+
       # tableOutput("ath_vec"),
-      
+
       tableOutput("report")
   )
 )
 
-# Задаем логику сервера, требуемую для рисования гистограммы
+# Задаем логику сервера, требуемую для построения графиков
 server <- function(input, output) {
 
   ff <- reactive({
     req(input$comp)
 
-    results_df %>% 
-      filter(Title == input$comp) %>% 
+    results_df %>%
+      filter(Title == input$comp) %>%
       ungroup()
-   
-    
+
+
   })
-  
+
   report <- reactive({
     req(input$comp)
-    
+
     ff() %>%
       filter(split == "Финиш")%>%
-      mutate(place = as.integer(place)) %>% 
+      mutate(place = as.integer(place)) %>%
       select(place, athlete, res, diff)
 
   })
-  
-  
- 
+
+
+
   ath_vec <- reactive({
     req(input$ath_1)
     req(input$ath_2)
@@ -211,9 +211,9 @@ server <- function(input, output) {
     c(input$ath_1, input$ath_2, input$ath_3, input$ath_4, input$ath_5, input$ath_6, input$ath_7, input$ath_8, input$ath_9)
 
   })
-  
+
   selected_data <- reactive({
-    
+
     left_join(ff() %>%
                 filter(text_filter(as.character(athlete), as.character(ath_vec()))) %>%
                 group_by(athlete) %>%
@@ -225,16 +225,16 @@ server <- function(input, output) {
                          speed = lap_len/lap_res) %>%
                 mutate(cur_diff_res = res_secs - min(res_secs)) %>%
                 mutate(split = factor(split, levels = unique(ff()$split))),
-              
+
               ff() %>%
-                ungroup() %>% 
+                ungroup() %>%
                 filter(split == "Финиш") %>%
-                mutate(ath_place = paste(athlete, place)) %>% 
+                mutate(ath_place = paste(athlete, place)) %>%
                 select(bib, ath_place), by = "bib")
-    
-        
+
+
   })
-    
+
   plot_1 <- reactive({
     selected_data() %>%
       ggplot(aes(x = split, y = diff_time, group = ath_place, col = ath_place))+
@@ -248,9 +248,9 @@ server <- function(input, output) {
         y = "Разница в секундах"
       ) +
       theme(legend.position = "bottom")
-    
+
   })
-  
+
   plot_2 <- reactive({
     selected_data() %>%
       ggplot(aes(x = split, y = cur_diff_res, group = ath_place, col = ath_place))+
@@ -266,21 +266,21 @@ server <- function(input, output) {
       theme(legend.position = "bottom")
 
   })
-  
+
   output$ath_vec <- renderTable({
     ath_vec()
   })
-  
+
   output$splits <- renderTable({
     splits()
   })
-  
+
   output$ff <- renderTable({
     ff() %>%
-      filter(text_filter(athlete, ath_vec())) %>% 
-      filter(place <= input$n_ath) 
+      filter(text_filter(athlete, ath_vec())) %>%
+      filter(place <= input$n_ath)
   })
-  
+
   output$selected_data <- renderTable({
     selected_data()
   })
@@ -288,7 +288,7 @@ server <- function(input, output) {
   output$my_plot <- renderPlot({
     plot_1()
   })
-  
+
   observeEvent(input$save_plot1, {
     # Задаем путь для сохранения
     save_plot1 <- selected_data() %>%
@@ -303,23 +303,23 @@ server <- function(input, output) {
         y = "Разница в секундах"
       ) +
       theme(legend.position = "bottom")
-    
+
     ggsave(paste(input$comp, "отрезки.png", collapse = "_"), plot = save_plot1, width = 8, height = 6)
     # ggsave("my_plot_1.png", plot = save_plot1, width = 10, height = 6)
     showNotification("График сохранен")
-    
-    
+
+
   })
-  
+
   output$my_plot2 <- renderPlot({
     plot_2()
   })
-  
+
   observeEvent(input$save_plot2, {
     # Перед сохранением вызываем нужный plot именно для второго графика
     # Можно сохранить конкретный график
     # Для этого создайте его отдельно
-    
+
     save_plot2 <- selected_data() %>%
       ggplot(aes(x = split, y = cur_diff_res, group = ath_place, col = ath_place))+
       geom_point()+
@@ -332,22 +332,22 @@ server <- function(input, output) {
         y = "Разница в секундах"
       ) +
       theme(legend.position = "bottom")
-    
+
     ggsave(paste(input$comp, "текущая разница.png", collapse = "_"), plot = save_plot2, width = 8, height = 6)
     # ggsave("my_plot_2.png", plot = save_plot2, width = 10, height = 6)
     showNotification("Второй график сохранен")
   })
 
-  
-  
+
+
   output$report <- renderTable({
     report()
   })
-  
+
 }
 
 
-# Выполняем приложение 
+# Выполняем приложение
 
 shinyApp(ui = ui, server = server)
 
