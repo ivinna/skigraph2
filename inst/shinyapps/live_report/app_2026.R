@@ -1,4 +1,5 @@
 library(shiny)
+library(openxlsx)
 library(lubridate)
 library(ggplot2)
 library(dplyr)
@@ -8,11 +9,15 @@ library(tidyr)
 # Устанавливаем локаль один раз при запуске
 Sys.setlocale("LC_TIME", "RUSSIAN")
 
-load("results_df.RData")
+lf <- list.files("data/comps/")
 
-results_df <- results_df %>% 
+dat <- lapply(paste0("data/comps/", lf), read.xlsx)
+
+results_2026 <- data.frame(do.call(rbind, dat))
+
+results_df <- results_2026 %>%
   select(-len, -n, -lens) %>%
-  mutate(Title = paste(Дата, Город,`Сп. Дисциплина`, Событие, Пол)) %>% 
+  mutate(Title = paste(Дата, Город,`Сп..Дисциплина`, Событие, Пол)) %>%
   mutate(split = str_replace_all(split, "Претайминг", ""))
 
 
@@ -21,12 +26,12 @@ text_filter <- function(x, y) {
   str_detect(x, regex(pattern, ignore_case = TRUE))
 }
 
-laps <- results_df %>% 
-  group_by(comp_id) %>% 
-  slice(1) %>% 
-  ungroup %>% 
-  select(Город, Дата,`Сп. Дисциплина`, comp_id, Событие, Пол) %>% 
-  mutate(Title = paste(Дата, Город,`Сп. Дисциплина`, Событие, Пол))
+laps <- results_df %>%
+  group_by(comp_id) %>%
+  slice(1) %>%
+  ungroup %>%
+  select(Город, Дата,`Сп..Дисциплина`, comp_id, Событие, Пол) %>%
+  mutate(Title = paste(Дата, Город,`Сп..Дисциплина`, Событие, Пол))
 
 diff_w_next <- function(x){c(x[1],(x[2:length(x)] - x[1:(length(x)-1)]))}
 
@@ -151,7 +156,7 @@ ui <- fluidPage(
     )
   ),
   
-  # Показать график 
+  # Показать график
   mainPanel(
     
     h3("График 1: Разница времени прохождения отдельных отрезков гонки"),
@@ -172,14 +177,14 @@ ui <- fluidPage(
   )
 )
 
-# Задаем логику сервера, требуемую для рисования гистограммы
+# Задаем требуемую логику сервера
 server <- function(input, output) {
   
   ff <- reactive({
     req(input$comp)
     
-    results_df %>% 
-      filter(Title == input$comp) %>% 
+    results_df %>%
+      filter(Title == input$comp) %>%
       ungroup()
     
     
@@ -190,7 +195,7 @@ server <- function(input, output) {
     
     ff() %>%
       filter(split == "Финиш")%>%
-      mutate(place = as.integer(place)) %>% 
+      mutate(place = as.integer(place)) %>%
       select(place, athlete, res, diff)
     
   })
@@ -219,7 +224,7 @@ server <- function(input, output) {
                 group_by(athlete) %>%
                 mutate(lap_res = diff_w_next(res_secs)) %>%
                 ungroup() %>%
-                filter(lap_res !=0) %>% 
+                filter(lap_res !=0) %>%
                 group_by(split) %>%
                 mutate(lap_best = min(lap_res, na.rm = T)) %>% #лучший показатель за отрезок запишем в столбец
                 mutate(diff_time = lap_res - lap_best,
@@ -228,9 +233,9 @@ server <- function(input, output) {
                 mutate(split = factor(split, levels = unique(ff()$split))),
               
               ff() %>%
-                ungroup() %>% 
+                ungroup() %>%
                 filter(split == "Финиш") %>%
-                mutate(ath_place = paste(athlete, place)) %>% 
+                mutate(ath_place = paste(athlete, place)) %>%
                 select(bib, ath_place), by = "bib", relationship = "many-to-many")
     
     
@@ -278,8 +283,8 @@ server <- function(input, output) {
   
   output$ff <- renderTable({
     ff() %>%
-      filter(text_filter(athlete, ath_vec())) %>% 
-      filter(place <= input$n_ath) 
+      filter(text_filter(athlete, ath_vec())) %>%
+      filter(place <= input$n_ath)
   })
   
   output$selected_data <- renderTable({
@@ -348,6 +353,6 @@ server <- function(input, output) {
 }
 
 
-# Выполняем приложение 
+# Выполняем приложение
 
 shinyApp(ui = ui, server = server)
